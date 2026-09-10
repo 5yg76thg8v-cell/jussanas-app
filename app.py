@@ -217,14 +217,4 @@ with tab3:
     st.title("About Veritas 🧠")
     
     if character_brain:
-        st_lottie(character_brain, height=160, key="about_char")
-
-    st.markdown("""
-    ### The Core Intersections of Veritas
-    * **Statutory Law:** Statutory limits establish structural conditions under which human labor operates.
-    * **Sociology:** Socio-economic status acts as a biological buffer or amplifier against environmental strain.
-    * **Physiology:** Chronic biological overload manifests measurable strain across neuroendocrine, autonomic, and cardiovascular systems.
-    
-    ---
-    *Veritas — Uncovering biological truth in socio-legal systems.*
-    """)
+        st_lottie(character_brain, height=160, key="about_char
