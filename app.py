@@ -19,17 +19,18 @@ st.set_page_config(
 # 2. HELPER FUNCTIONS & CUSTOM LOADING SCREEN
 # ==========================================
 def load_lottieurl(url: str):
-    """Fetch Lottie animation JSON from the web."""
+    """Fetch Lottie animation JSON safely from the web."""
     try:
         r = requests.get(url, timeout=5)
         if r.status_code == 200:
             return r.json()
     except Exception:
         return None
+    return None
 
-def show_custom_loading_screen(message="Veritas is analyzing legal statutes and calculating biological impact..."):
+def show_custom_loading_screen(message="Veritas is analyzing legal statutes..."):
     """
-    Renders your custom ibis Paint drawing as an overlay while calculating formulas.
+    Renders custom ibis Paint drawing as an overlay while calculating.
     Replace the img src URL with your actual GitHub raw link once uploaded!
     """
     loading_html = f"""
@@ -47,7 +48,6 @@ def show_custom_loading_screen(message="Veritas is analyzing legal statutes and 
         align-items: center;
         font-family: sans-serif;
     ">
-        <!-- REPLACE LINK BELOW WITH YOUR GITHUB RAW IMAGE LINK -->
         <img src="https://raw.githubusercontent.com/YOUR-GITHUB-USERNAME/veritas-app/main/mascot.png" 
              width="180" 
              style="margin-bottom: 20px; border-radius: 12px;" 
@@ -59,7 +59,6 @@ def show_custom_loading_screen(message="Veritas is analyzing legal statutes and 
             {message}
         </p>
         
-        <!-- Animated Progress Bar -->
         <div style="
             width: 220px;
             height: 10px;
@@ -80,10 +79,10 @@ def show_custom_loading_screen(message="Veritas is analyzing legal statutes and 
     
     placeholder = st.empty()
     placeholder.markdown(loading_html, unsafe_allow_html=True)
-    time.sleep(2.0)  # Controls how long the loading screen stays visible
+    time.sleep(1.5)
     placeholder.empty()
 
-# Load cute Lottie animations for the app
+# Load Lottie animations
 character_hello = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_V9t630.json")
 character_brain = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_mDnmhAgZkb.json")
 
@@ -115,11 +114,23 @@ env_compliance = st.sidebar.slider(
 st.sidebar.divider()
 st.sidebar.subheader("Sociological Filter")
 
-income = st.sidebar.selectbox(
+# Income cohort definitions
+income_dict = {
+    15000: "$15,000 / yr (Deep Poverty)",
+    28000: "$28,000 / yr (Low Wage / Vulnerable)",
+    45000: "$45,000 / yr (Lower-Middle Cohort)",
+    60000: "$60,000 / yr (Median Household)",
+    100000: "$100,000 / yr (Upper-Middle Income)",
+    150000: "$150,000 / yr (High Earner / Buffered)",
+    250000: "$250,000 / yr (Top Bracket / Fully Buffered)"
+}
+
+selected_income = st.sidebar.selectbox(
     "Annual Household Income ($)",
-    options=[28000, 60000, 150000],
-    format_func=lambda x: f"${x:,} / year",
-    help="Socio-economic baseline income representing vulnerable, middle, and high-earning cohorts."
+    options=list(income_dict.keys()),
+    format_func=lambda key: income_dict[key],
+    index=1,
+    help="Socio-economic baseline income representing cohorts across the financial spectrum."
 )
 
 
@@ -154,25 +165,28 @@ with tab1:
 # ------------------------------------------
 with tab2:
     st.title("Physiological Impact Simulator 🧪")
-    st.caption("Modeled for Annual Household Income: **$" + f"{income:,}**")
+    cohort_label = income_dict[selected_income]
+    st.caption(f"Modeled for Income Cohort: **{cohort_label}**")
 
-    # Simulation Button with Custom ibis Paint Loading Screen
+    # Simulation Button
     if st.button("🚀 Run Bio-Legal Simulation", type="primary", use_container_width=True):
         show_custom_loading_screen("Veritas is calculating cortisol levels and autonomic strain...")
         st.success("Analysis Complete!")
 
-    # --- MATHEMATICAL MODEL CALCULATIONS ---
-    # Standardized parameters
-    W = max(0, (work_hours - 35) / 15)
-    S = np.log(income / 25000)
-    R = max(0, (11 - rest_period) / 11)
-    E = (1 - env_compliance / 100) * 1.2
+    # Standardized Parameters
+    W_val = max(0.0, (float(work_hours) - 35.0) / 15.0)
+    S_val = float(np.log(float(selected_income) / 25000.0))
+    R_val = max(0.0, (11.0 - float(rest_period)) / 11.0)
+    E_val = (1.0 - float(env_compliance) / 100.0) * 1.2
 
     # Physiological Indexes
-    csi = min(100.0, 15 + 18.5 * (W**2) - 12.0 * S + 14.5 * E)
-    asfi = min(100.0, (10 + 38 * R + 22 * W) * (1 + 0.25 * E - 0.15 * S))
+    csi_calc = 15.0 + 18.5 * (W_val ** 2) - 12.0 * S_val + 14.5 * E_val
+    csi = min(100.0, max(0.0, csi_calc))
 
-    # --- BIOMARKER METRICS DISPLAY ---
+    asfi_calc = (10.0 + 38.0 * R_val + 22.0 * W_val) * (1.0 + 0.25 * E_val - 0.15 * S_val)
+    asfi = min(100.0, max(0.0, asfi_calc))
+
+    # Biomarker Displays
     st.subheader("Current Biomarker Strain Indicators")
     col1, col2 = st.columns(2)
     
@@ -189,22 +203,43 @@ with tab2:
 
     st.divider()
 
-    # --- CARDIOVASCULAR RISK TRAJECTORY CHART ---
+    # Cardiovascular Trajectory Chart
     st.subheader("5-Year Cardiovascular Strain Trajectory (CVSI)")
     st.write("Projected cumulative cardiovascular risk score over a 5-year statutory period:")
 
-    years = list(range(1, 6))
-    cvsi_scores = [
-        min(100.0, 10 + (35 * (csi / 100)**1.5 + 20 * E - 8.5 * S) * (1 + 0.12 * t)) 
-        for t in years
-    ]
+    years_list = [1, 2, 3, 4, 5]
+    cvsi_list = []
+    
+    for yr in years_list:
+        raw_cvsi = 10.0 + (35.0 * ((csi / 100.0) ** 1.5) + 20.0 * E_val - 8.5 * S_val) * (1.0 + 0.12 * float(yr))
+        cvsi_list.append(min(100.0, max(0.0, raw_cvsi)))
 
-    df_chart = pd.DataFrame({
-        "Year": years,
-        "Cardiovascular Strain (CVSI)": cvsi_scores
+    chart_data = pd.DataFrame({
+        "Year": years_list,
+        "Cardiovascular Strain (CVSI)": cvsi_list
     })
     
-    st.line_chart(df_chart.set_index("Year"))
+    st.line_chart(chart_data.set_index("Year"))
 
     # Educational Disclaimer
-    st.caption("Disclaimer: Veritas is an educational modeling
+    st.caption("Disclaimer: Veritas is an educational modeling simulator for socio-legal research and does not constitute medical or legal advice.")
+
+
+# ------------------------------------------
+# SCREEN 3: ABOUT VERITAS
+# ------------------------------------------
+with tab3:
+    st.title("About Veritas 🧠")
+    
+    if character_brain:
+        st_lottie(character_brain, height=160, key="about_char")
+
+    st.markdown("""
+    ### The Core Intersections of Veritas
+    * **Statutory Law:** Statutory limits establish structural conditions under which human labor operates.
+    * **Sociology:** Socio-economic status acts as a biological buffer or amplifier against environmental strain.
+    * **Physiology:** Chronic biological overload manifests measurable strain across neuroendocrine, autonomic, and cardiovascular systems.
+    
+    ---
+    *Veritas — Uncovering biological truth in socio-legal systems.*
+    """)
