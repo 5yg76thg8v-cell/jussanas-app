@@ -207,14 +207,4 @@ with tab2:
     st.line_chart(df_chart.set_index("Year"))
 
     # Educational Disclaimer
-    st.caption("Disclaimer: Veritas is an educational modeling simulator for socio-legal research and does not constitute medical or legal advice.")
-
-
-# ------------------------------------------
-# SCREEN 3: ABOUT VERITAS
-# ------------------------------------------
-with tab3:
-    st.title("About Veritas 🧠")
-    
-    if character_brain:
-        st_lottie(character_brain, height=160, key="about_char
+    st.caption("Disclaimer: Veritas is an educational modeling
